@@ -63,13 +63,13 @@ resource "aws_instance" "ec2-daniel" {
 
   depends_on = [aws_security_group.nginx]
 
-  user_data = <<-EOF
-              #!/bin/bash
-              sudo apt-get update -y
-              sudo apt install -y docker.io
-              sudo systemctl start docker
-              sudo docker run --name nginx -p 80:80 -d nginx:latest
-              EOF
+  user_data = <<-EOT
+  #!/bin/bash
+  sudo apt-get update -y
+  sudo apt install -y docker.io
+  sudo systemctl start docker
+  sudo docker run --name nginx -p 80:80 -d nginx:latest
+  EOT
 
   tags = {
     Name = "ec2-daniel"
