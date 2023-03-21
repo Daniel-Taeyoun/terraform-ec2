@@ -53,9 +53,9 @@ provider "aws" {
   profile = "default"
 }
 
-#########################################
+#######################################################
 # Network Infra(ex. VPC, Subnet, Internet Gateway ...)
-#########################################
+#######################################################
 module "aws_network" {
   source = "../modules/network"
   aws_region = var.aws_region[terraform.workspace]
@@ -68,6 +68,4 @@ module "aws_network" {
 
   environment_upper = upper(var.environment[terraform.workspace])
   environment_lower = lower(var.environment[terraform.workspace])
-
-
 }
