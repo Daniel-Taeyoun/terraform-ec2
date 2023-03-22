@@ -69,3 +69,14 @@ module "aws_network" {
   environment_upper = upper(var.environment[terraform.workspace])
   environment_lower = lower(var.environment[terraform.workspace])
 }
+
+terraform {
+  backend "s3" {
+    bucket = "tch-devops-terraform-state"
+    key = "1-Network/terraform.tfstate"
+    region = "ap-northeast-2"
+
+    dynamodb_table = "terraform-up-and-running-locks"
+    encrypt = true
+  }
+}
