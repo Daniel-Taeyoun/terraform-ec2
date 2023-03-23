@@ -1,31 +1,24 @@
 locals {
-  service_name      = "tch-devops"
   subnets_private_a = "sbn-dev-an2-tch-devops-private-a"
   subnets_private_c = "sbn-dev-an2-tch-devops-private-c"
 }
 
-variable "aws_region" {
+variable "tfvars_aws_region" {
   type = map(string)
-  default = {
-    "develop" : "ap-northeast-2"
-    "stage" : "ap-northeast-2"
-    "main" : "ap-northeast-1"
-  }
 }
 
-variable "environment" {
+variable "tfvars_environment" {
   type = map(string)
-  default = {
-    "develop" : "dev"
-    "stage" : "stg"
-    "main" : "prd"
-  }
+}
+
+variable "tfvars_service_name" {
+  type = string
 }
 
 ## TODO : dev 하드코딩 제거 필요
 data "aws_vpc" "tch_devops_vpc" {
   tags = {
-    Name = "vpc-dev-${local.service_name}"
+    Name = "vpc-${lower(var.tfvars_environment[terraform.workspace])}-${var.tfvars_service_name}"
   }
 }
 
@@ -47,7 +40,7 @@ data "aws_subnet" "tch_devops_subnets_private_c" {
 }
 
 provider "aws" {
-  region = var.aws_region[terraform.workspace]
+  region = var.tfvars_aws_region[terraform.workspace]
   profile = "default"
 }
 
@@ -58,7 +51,7 @@ module "aws_instance" {
   source = "../modules/instance"
   vpc_id = data.aws_vpc.tch_devops_vpc.id
   subnet_id = [data.aws_subnet.tch_devops_subnets_private_a.id, data.aws_subnet.tch_devops_subnets_private_c.id]
-  service_name = local.service_name
+  service_name = var.tfvars_service_name
 }
 
 terraform {
