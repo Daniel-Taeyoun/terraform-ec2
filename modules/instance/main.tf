@@ -28,6 +28,7 @@ resource "aws_security_group" "nginx" {
   }
 }
 
+## TODO : count.index 수정 필요
 resource "aws_instance" "ec2-daniel" {
   count = length(var.subnet_id)
 
@@ -48,8 +49,7 @@ resource "aws_instance" "ec2-daniel" {
   sudo systemctl start docker
   sudo docker run --name nginx -p 80:80 -d nginx:latest
   EOT
-
   tags = {
-    Name = "ec2-${var.service_name}"
+    Name = "ec2-${var.service_name}-${count.index + 1}"
   }
 }
