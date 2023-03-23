@@ -1,19 +1,13 @@
-variable "aws_region" {
+variable "tfvars_aws_region" {
   type = map(string)
-  default = {
-    "develop" : "ap-northeast-2"
-    "stage" : "ap-northeast-2"
-    "main" : "ap-northeast-1"
-  }
 }
 
-variable "environment" {
+variable "tfvars_environment" {
   type = map(string)
-  default = {
-    "develop" : "dev"
-    "stage" : "stg"
-    "main" : "prd"
-  }
+}
+
+variable "tfvars_service_name" {
+  type = string
 }
 
 variable "cidr_block" {
@@ -49,7 +43,7 @@ variable "azs" {
 }
 
 provider "aws" {
-  region = var.aws_region[terraform.workspace]
+  region = var.tfvars_aws_region[terraform.workspace]
   profile = "default"
 }
 
@@ -58,16 +52,16 @@ provider "aws" {
 #######################################################
 module "aws_network" {
   source = "../modules/network"
-  aws_region = var.aws_region[terraform.workspace]
-  service_name = "tch-devops"
+  aws_region = var.tfvars_aws_region[terraform.workspace]
+  service_name = var.tfvars_service_name
 
   cidr_block = var.cidr_block[terraform.workspace]
   public_subnet_cidr = var.public_subnet_cidr[terraform.workspace]
   private_subnet_cidr = var.private_subnet_cidr[terraform.workspace]
   azs = var.azs[terraform.workspace]
 
-  environment_upper = upper(var.environment[terraform.workspace])
-  environment_lower = lower(var.environment[terraform.workspace])
+  environment_upper = upper(var.tfvars_environment[terraform.workspace])
+  environment_lower = lower(var.tfvars_environment[terraform.workspace])
 }
 
 terraform {
