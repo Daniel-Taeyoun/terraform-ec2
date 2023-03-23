@@ -1,21 +1,24 @@
-variable "aws_region" {
+variable "tfvars_aws_region" {
   type = map(string)
-  default = {
-    "develop" : "ap-northeast-2"
-    "stage" : "ap-northeast-2"
-    "main" : "ap-northeast-1"
-  }
+}
+
+variable "tfvars_aws_profile" {
+  type = string
+}
+
+variable "tfvars_service_name" {
+  type = string
 }
 
 locals {
-  bucketName = "tch-devops-terraform-state"
+  bucketName = "${var.tfvars_service_name}-terraform-state"
   ssl_algorithm = "AES256"
   dynamoDbName = "terraform-up-and-running-locks"
 }
 
 provider "aws" {
-  region = var.aws_region[terraform.workspace]
-  profile = "default"
+  region = var.tfvars_aws_region[terraform.workspace]
+  profile = var.tfvars_aws_profile
 }
 
 resource "aws_s3_bucket" "terraform_bucket_state" {

@@ -11,3 +11,5 @@ tfvars_aws_region = {
 }
 
 tfvars_service_name = "tch-devops"
+
+tfvars_aws_profile = "default"
