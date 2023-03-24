@@ -15,7 +15,7 @@ variable "tfvars_service_name" {
   type = string
 }
 
-## TODO : dev 하드코딩 제거 필요
+# data를 통해서 Cloud 내에 있는 리소스 ID 값을 받아올 수 있다.
 data "aws_vpc" "tch_devops_vpc" {
   tags = {
     Name = "vpc-${lower(var.tfvars_environment[terraform.workspace])}-${var.tfvars_service_name}"
