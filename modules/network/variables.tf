@@ -1,53 +1,44 @@
+variable "service_name" {
+  type        = string
+  description = "Service Name"
+  default     = null
+}
+
 variable "cidr_block" {
-  type        = map(string)
+  type        = string
   description = "VPN CIDR value"
-  default     = {
-    "develop" : "10.12.0.0/16"
-  }
+  default     = null
 }
 
 variable "environment_upper" {
-  type = map(string)
-  default = {
-    "develop" : "DEV"
-  }
+  type = string
+  default = null
 }
 
 variable "environment_lower" {
-  type = map(string)
-  default = {
-    "develop" : "dev"
-  }
+  type = string
+  default = null
 }
 
-variable "public_subnet_cidrs" {
-  type        = map(list(string))
+variable "public_subnet_cidr" {
+  type        = list(string)
   description = "Public Subnet CIDR values"
-  default     = {
-    "develop" : ["10.12.0.0/24", "10.12.8.0/24"]
-  }
+  default     = []
 }
 
-variable "private_subnet_cidrs" {
-  type        = map(list(string))
+variable "private_subnet_cidr" {
+  type        = list(string)
   description = "Private Subnet CIDR values"
-  default     = {
-    "develop" : ["10.12.24.0/24", "10.12.32.0/24"]
-  }
+  default     = []
 }
 
 variable "azs" {
-  type        = map(list(string))
+  type        = list(string)
   description = "Availability Zone"
-  default     = {
-    "develop" : ["ap-northeast-2a", "ap-northeast-2c"]
-  }
+  default     = []
 }
 
-variable "demo_devops_region" {
-  type = map(string)
-  default = {
-    "develop" : "ap-northeast-2"
-  }
+variable "aws_region" {
+  type = string
+  default = null
 }
-

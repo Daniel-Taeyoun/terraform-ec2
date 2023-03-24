@@ -1,77 +1,66 @@
-variable "aws_region" {
-  type = map(string)
-  default = {
-    "develop" : "ap-northeast-2"
-    "stage" : "ap-northeast-2"
-    "main" : "ap-northeast-1"
-  }
-}
-variable "vpc_id_daniel" {
-  default = "vpc-0835e68a89fedca6a"
+locals {
+  subnets_private_a = "sbn-dev-an2-tch-devops-private-a"
+  subnets_private_c = "sbn-dev-an2-tch-devops-private-c"
 }
 
-variable "subnet_id_daniel" {
-  type = list(string)
-  default = ["subnet-04877697587e94e41", "subnet-0b9bfefbadbe30063"]
+variable "tfvars_aws_region" {
+  type = map(string)
+}
+
+variable "tfvars_environment" {
+  type = map(string)
+}
+
+variable "tfvars_service_name" {
+  type = string
+}
+
+## TODO : dev 하드코딩 제거 필요
+data "aws_vpc" "tch_devops_vpc" {
+  tags = {
+    Name = "vpc-${lower(var.tfvars_environment[terraform.workspace])}-${var.tfvars_service_name}"
+  }
+}
+
+## TODO : subnet ID를 filter?를 통해 List 형태로 호출하는 방법 필요
+data "aws_subnet" "tch_devops_subnets_private_a" {
+  vpc_id = data.aws_vpc.tch_devops_vpc.id
+  filter {
+    name   = "tag:Name"
+    values = [local.subnets_private_a]
+  }
+}
+
+data "aws_subnet" "tch_devops_subnets_private_c" {
+  vpc_id = data.aws_vpc.tch_devops_vpc.id
+  filter {
+    name   = "tag:Name"
+    values = [local.subnets_private_c]
+  }
 }
 
 provider "aws" {
-  region = var.aws_region[terraform.workspace]
+  region = var.tfvars_aws_region[terraform.workspace]
   profile = "default"
 }
 
-resource "aws_security_group" "nginx" {
-  vpc_id = var.vpc_id_daniel
-  name_prefix = "scg-daniel-"
-
-  ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = {
-    Name = "scg-ec2-daniel"
-  }
+#######################################################
+# Instance Setting(ex. EC2, Security Group)
+#######################################################
+module "aws_instance" {
+  source = "../modules/instance"
+  vpc_id = data.aws_vpc.tch_devops_vpc.id
+  subnet_id = [data.aws_subnet.tch_devops_subnets_private_a.id, data.aws_subnet.tch_devops_subnets_private_c.id]
+  service_name = var.tfvars_service_name
 }
 
-resource "aws_instance" "ec2-daniel" {
-  count = length(var.subnet_id_daniel)
+terraform {
+  backend "s3" {
+    bucket = "tch-devops-terraform-state"
+    key = "2-EC2/terraform.tfstate"
+    region = "ap-northeast-2"
 
-  ami           = "ami-0e38c97339cddf4bd"
-  instance_type = "t2.micro"
-  key_name      = "DevOps_Key"
-  subnet_id     = var.subnet_id_daniel[count.index]
-
-  vpc_security_group_ids = [aws_security_group.nginx.id]
-  associate_public_ip_address = false
-
-  depends_on = [aws_security_group.nginx]
-
-  user_data = <<-EOT
-  #!/bin/bash
-  sudo apt-get update -y
-  sudo apt install -y docker.io
-  sudo systemctl start docker
-  sudo docker run --name nginx -p 80:80 -d nginx:latest
-  EOT
-
-  tags = {
-    Name = "ec2-daniel"
+    dynamodb_table = "terraform-up-and-running-locks"
+    encrypt = true
   }
 }

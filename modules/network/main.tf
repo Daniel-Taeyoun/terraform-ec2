@@ -1,20 +1,20 @@
 
 resource "aws_vpc" "this" {
-  cidr_block = var.cidr_block[terraform.workspace]
+  cidr_block = var.cidr_block
   enable_dns_hostnames = true
   tags = {
-    Name = "vpc-${var.environment_lower[terraform.workspace]}-daniel"
+    Name = "vpc-${var.environment_lower}-${var.service_name}"
   }
 }
 
 resource "aws_subnet" "sbn-tf-daniel-public" {
-  count = length(var.public_subnet_cidrs[terraform.workspace])
+  count = length(var.public_subnet_cidr)
   vpc_id = aws_vpc.this.id
-  cidr_block = element(var.public_subnet_cidrs[terraform.workspace], count.index )
-  availability_zone = element(var.azs[terraform.workspace], count.index )
+  cidr_block = element(var.public_subnet_cidr, count.index )
+  availability_zone = element(var.azs, count.index )
   tags = {
-    Name = "sbn-${var.environment_lower[terraform.workspace]}-an2-daniel-public-${
-      replace(element(var.azs[terraform.workspace], count.index), var.demo_devops_region[terraform.workspace], "")
+    Name = "sbn-${var.environment_lower}-an2-${var.service_name}-public-${
+      replace(element(var.azs, count.index), var.aws_region, "")
     }"
   }
 
@@ -24,13 +24,13 @@ resource "aws_subnet" "sbn-tf-daniel-public" {
 }
 
 resource "aws_subnet" "sbn-tf-daniel-private" {
-  count = length(var.private_subnet_cidrs[terraform.workspace])
+  count = length(var.private_subnet_cidr)
   vpc_id = aws_vpc.this.id
-  cidr_block = element(var.private_subnet_cidrs[terraform.workspace], count.index )
-  availability_zone = element(var.azs[terraform.workspace], count.index )
+  cidr_block = element(var.private_subnet_cidr, count.index )
+  availability_zone = element(var.azs, count.index )
   tags = {
-    Name = "sbn-${var.environment_lower[terraform.workspace]}-an2-daniel-private-${
-      replace(element(var.azs[terraform.workspace], count.index), var.demo_devops_region[terraform.workspace], "")
+    Name = "sbn-${var.environment_lower}-an2-${var.service_name}-private-${
+      replace(element(var.azs, count.index), var.aws_region, "")
     }"
   }
 
@@ -42,7 +42,7 @@ resource "aws_subnet" "sbn-tf-daniel-private" {
 resource "aws_internet_gateway" "igw-tf-daniel" {
   vpc_id = aws_vpc.this.id
   tags = {
-    Name = "igw-${var.environment_lower[terraform.workspace]}-daniel"
+    Name = "igw-${var.environment_lower}-${var.service_name}"
   }
 }
 
@@ -52,7 +52,7 @@ resource "aws_eip" "nat_eip" {
   vpc   = true
 
   tags = {
-    Name = "eip-${var.environment_lower[terraform.workspace]}-an2-daniel-nat"
+    Name = "eip-${var.environment_lower}-an2-${var.service_name}-nat"
   }
 
   lifecycle {
@@ -65,7 +65,7 @@ resource "aws_nat_gateway" "nat-tf-daniel" {
   subnet_id = aws_subnet.sbn-tf-daniel-public[0].id
 
   tags = {
-    Name = "nat-${var.environment_lower[terraform.workspace]}-an2-daniel"
+    Name = "nat-${var.environment_lower}-an2-${var.service_name}"
   }
 
   depends_on = [aws_internet_gateway.igw-tf-daniel]
@@ -80,7 +80,7 @@ resource "aws_route_table" "rt-vpc" {
     gateway_id = aws_internet_gateway.igw-tf-daniel.id
   }
   tags = {
-    Name = "rt-${var.environment_lower[terraform.workspace]}-an2-daniel-vpc"
+    Name = "rt-${var.environment_lower}-an2-${var.service_name}-vpc"
   }
   depends_on = [
     aws_internet_gateway.igw-tf-daniel
@@ -96,7 +96,7 @@ resource "aws_route_table" "rt-subnet-public" {
     gateway_id = aws_internet_gateway.igw-tf-daniel.id
   }
   tags = {
-    Name = "rt-${var.environment_lower[terraform.workspace]}-an2-daniel-public"
+    Name = "rt-${var.environment_lower}-an2-${var.service_name}-public"
   }
   depends_on = [
     aws_internet_gateway.igw-tf-daniel
@@ -111,7 +111,7 @@ resource "aws_route_table" "rt-subnet-private" {
     gateway_id = aws_nat_gateway.nat-tf-daniel.id
   }
   tags = {
-    Name = "rt-${var.environment_lower[terraform.workspace]}-an2-daniel-private"
+    Name = "rt-${var.environment_lower}-an2-${var.service_name}-private"
   }
   depends_on = [
     aws_internet_gateway.igw-tf-daniel
@@ -124,13 +124,13 @@ resource "aws_main_route_table_association" "rt-vpc-tf-daniel" {
 }
 
 resource "aws_route_table_association" "rt-sbn-tf-daniel-public" {
-  count = length(var.public_subnet_cidrs[terraform.workspace])
+  count = length(var.public_subnet_cidr)
   subnet_id = element(aws_subnet.sbn-tf-daniel-public[*].id, count.index)
   route_table_id = aws_route_table.rt-subnet-public.id
 }
 
 resource "aws_route_table_association" "rt-sbn-tf-daniel-private" {
-  count = length(var.private_subnet_cidrs[terraform.workspace])
+  count = length(var.private_subnet_cidr)
   subnet_id = element(aws_subnet.sbn-tf-daniel-private[*].id, count.index)
   route_table_id = aws_route_table.rt-subnet-private.id
 }
